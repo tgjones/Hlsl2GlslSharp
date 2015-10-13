@@ -3,10 +3,10 @@
     /// <summary>
     /// Translation options
     /// </summary>
-    internal enum TTranslateOptions
+    public enum TranslationOptions : uint
     {
-        ETranslateOpNone = 0,
-        ETranslateOpIntermediate = (1 << 0),
+        None = 0,
+        Intermediate = (1 << 0),
 
         /// Some drivers (e.g. OS X 10.6.x) have bugs with GLSL 1.20 array
         /// initializer syntax. If you need to support this configuration,
@@ -29,21 +29,21 @@
         ///		#else
         ///			const vec2 samples[] = vec2[](vec2(-1.0, 0.1), vec2(0.0, 0.5), vec2(1.0, 0.1)); 
         ///		#endif
-        ETranslateOpEmitGLSL120ArrayInitWorkaround = (1 << 1),
+        EmitGLSL120ArrayInitWorkaround = (1 << 1),
 
         // Instead of using built-in "gl_MultiTexCoord0" for "appdata_t.texcoord : TEXCOORD0"
         //  we will output an attribute "xlat_attrib_TEXCOORD0". Targeting GLSL ES forces this
         //  as there are no built-in attributes in that variant.
-        ETranslateOpAvoidBuiltinAttribNames = (1 << 2),
+        AvoidBuiltinAttribNames = (1 << 2),
 
         // Always use "gl_MultiTexCoord0" for "TEXCOORD0" and so on,
         // even in GLSL ES. It is expected that client code will add #defines to handle them
         // later on.
-        ETranslateOpForceBuiltinAttribNames = (1 << 3),
+        ForceBuiltinAttribNames = (1 << 3),
 
         // When not using built-in attribute names (due to ETranslateOpAvoidBuiltinAttribNames or GLSL ES),
         //  instead of outputting e.g. "xlat_attrib_TEXCOORD0" for "appdata_t.texcoord : TEXCOORD0"
         //  we will output "appdata_t_texcoord"
-        ETranslateOpPropogateOriginalAttribNames = (1 << 4),
+        PropogateOriginalAttribNames = (1 << 4),
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Hlsl2GlslSharp.Util
@@ -32,8 +33,10 @@ namespace Hlsl2GlslSharp.Util
             [MarshalAs(UnmanagedType.LPStr)] string fname, 
             [MarshalAs(UnmanagedType.LPStr)] string parentfname,
             [Out] out IntPtr output,
+            [Out] out int outputLength,
             [Out] out IntPtr data);
 
+        [StructLayout(LayoutKind.Sequential)]
         public struct Hlsl2Glsl_ParseCallbacks
         {
             [MarshalAs(UnmanagedType.FunctionPtr)]
@@ -48,15 +51,20 @@ namespace Hlsl2GlslSharp.Util
         /// \param options
         ///		Flags of TTranslateOptions
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int Hlsl2Glsl_Parse(IntPtr handle,
+        public static extern int Hlsl2Glsl_Parse(
+            IntPtr handle,
             [MarshalAs(UnmanagedType.LPStr)] string shaderString,
             TargetVersion targetVersion,
             ref Hlsl2Glsl_ParseCallbacks callbacks,
-            uint options);
+            TranslationOptions options);
 
         /// After parsing a HLSL shader, do the final translation to GLSL.
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int Hlsl2Glsl_Translate(IntPtr handle, [MarshalAs(UnmanagedType.LPStr)] string entry, TargetVersion targetVersion, uint options);
+        public static extern int Hlsl2Glsl_Translate(
+            IntPtr handle, 
+            [MarshalAs(UnmanagedType.LPStr)] string entry, 
+            TargetVersion targetVersion, 
+            TranslationOptions options);
 
         /// After translating HLSL shader(s), retrieve the translated GLSL source.
         [DllImport(DllName, EntryPoint = "Hlsl2Glsl_GetShader", CallingConvention = CallingConvention.Cdecl)]
@@ -68,17 +76,38 @@ namespace Hlsl2GlslSharp.Util
             return Marshal.PtrToStringAnsi(result);
         }
 
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        [return: MarshalAs(UnmanagedType.LPStr)]
-        public static extern string Hlsl2Glsl_GetInfoLog(IntPtr handle);
+        [DllImport(DllName, EntryPoint = "Hlsl2Glsl_GetInfoLog", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr Hlsl2Glsl_GetInfoLog_Impl(IntPtr handle);
+
+        public static string Hlsl2Glsl_GetInfoLog(IntPtr handle)
+        {
+            var result = Hlsl2Glsl_GetInfoLog_Impl(handle);
+            return Marshal.PtrToStringAnsi(result);
+        }
 
         /// After translating, retrieve the number of uniforms
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int Hlsl2Glsl_GetUniformCount(IntPtr handle);
+        private static extern int Hlsl2Glsl_GetUniformCount(IntPtr handle);
 
         /// After translating, retrieve the uniform info table
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern ShUniformInfo[] Hlsl2Glsl_GetUniformInfo(IntPtr handle);
+        [DllImport(DllName, EntryPoint = "Hlsl2Glsl_GetUniformInfo", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr Hlsl2Glsl_GetUniformInfo_Impl(IntPtr handle);
+
+        public static UniformInfo[] Hlsl2Glsl_GetUniformInfo(IntPtr handle)
+        {
+            var numUniforms = Hlsl2Glsl_GetUniformCount(handle);
+            var uniformInfosPtr = Hlsl2Glsl_GetUniformInfo_Impl(handle);
+            var structSize = Marshal.SizeOf(typeof(UniformInfo));
+
+            var result = new UniformInfo[numUniforms];
+            for (int i = 0; i < numUniforms; ++i)
+            {
+                var data = new IntPtr(uniformInfosPtr.ToInt32() + structSize * i);
+                result[i] = (UniformInfo) Marshal.PtrToStructure(data, typeof (UniformInfo));
+            }
+
+            return result;
+        }
 
         /// Instead of mapping HLSL attributes to GLSL fixed-function attributes, this function can be used to 
         /// override the  attribute mapping.  This tells the code generator to use user-defined attributes for 
@@ -96,7 +125,7 @@ namespace Hlsl2GlslSharp.Util
         ///      1 on success, 0 on failure
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int Hlsl2Glsl_SetUserAttributeNames(IntPtr handle,
-            EAttribSemantic[] pSemanticEnums,
+            AttributeSemantic[] pSemanticEnums,
             [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] string[] pSemanticNames,
             int nNumSemantics);
 

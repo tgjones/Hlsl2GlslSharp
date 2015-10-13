@@ -1,14 +1,11 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace Hlsl2GlslSharp
 {
-    /// <summary>
-    /// Uniform info struct
-    /// </summary>
-    internal struct ShUniformInfo
+    [StructLayout(LayoutKind.Sequential)]
+    public struct UniformInfo
     {
-        private const int MaxInit = 10;
-
         [MarshalAs(UnmanagedType.LPStr)]
         public string Name;
 
@@ -18,11 +15,10 @@ namespace Hlsl2GlslSharp
         [MarshalAs(UnmanagedType.LPStr)]
         public string RegisterSpec;
 
-        public EShType Type;
+        public VariableType Type;
 
         public int ArraySize;
 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MaxInit)]
-        public float[] Init;
+        public IntPtr Init;
     }
 }
