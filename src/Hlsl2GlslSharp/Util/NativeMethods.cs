@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Hlsl2GlslSharp.Util
 {
     internal static class NativeMethods
     {
-        private const string DllName = "hlslang.dll";
+        private const string DllName = "hlsl2glsl.dll";
 
         /// Initialize the HLSL2GLSL translator.  This function must be called once prior to calling any other
         /// HLSL2GLSL translator functions
@@ -102,7 +101,7 @@ namespace Hlsl2GlslSharp.Util
             var result = new UniformInfo[numUniforms];
             for (int i = 0; i < numUniforms; ++i)
             {
-                var data = new IntPtr(uniformInfosPtr.ToInt32() + structSize * i);
+                var data = IntPtr.Add(uniformInfosPtr, structSize * i);
                 result[i] = (UniformInfo) Marshal.PtrToStructure(data, typeof (UniformInfo));
             }
 
